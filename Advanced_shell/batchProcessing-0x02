@@ -1,0 +1,24 @@
+#!/bin/bash
+# Script to fetch data for multiple Pokémon and save to individual files
+
+# List of Pokémon
+POKEMONS=("bulbasaur" "ivysaur" "venusaur" "charmander" "charmeleon")
+
+# Loop through each Pokémon
+for NAME in "${POKEMONS[@]}"
+do
+  echo "Fetching data for $NAME..."
+
+  # Fetch data and save to file
+  RESPONSE=$(curl -s -f "https://pokeapi.co/api/v2/pokemon/$NAME")
+
+  if [ $? -eq 0 ]; then
+    echo "$RESPONSE" > "${NAME}.json"
+    echo "Saved to ${NAME}.json"
+  else
+    echo "Failed to fetch data for $NAME at $(date)" >> errors.txt
+  fi
+
+  # Delay to avoid rate-limiting (e.g., 1.5 seconds)
+  sleep 1.5
+done
