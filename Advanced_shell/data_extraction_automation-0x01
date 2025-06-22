@@ -1,14 +1,17 @@
 #!/bin/bash
-# Script to extract and format Pokémon data using jq, awk, sed
+# Script to extract and print formatted Pokémon data using jq, awk, sed with required variable names
 
-jq -r '
-  .name, .types[0].type.name, .weight, .height
-' data.json | awk '
-NR==1 { name=$0 }
-NR==2 { type=$0 }
-NR==3 { weight_kg = int($0 / 10) }
-NR==4 { height_m = $0 / 10 }
-END {
-  printf "%s is of type %s, weighs %dkg, and is %.1fm tall.\n", name, type, weight_kg, height_m
-}
-' | sed -E 's/^(.)/\U\1/; s/ of type (.)/ of type \U\1/'
+read name type weight height < <(
+  jq -r '.name, .types[0].type.name, .weight, .height' data.json
+)
+
+# Use required variable names
+formatted_weight=$(( weight / 10 ))
+formatted_height=$(awk "BEGIN { printf \"%.1f\", $height / 10 }")
+
+# Capitalize name and type using sed
+name=$(echo "$name" | sed -E 's/^(.)/\U\1/')
+type=$(echo "$type" | sed -E 's/^(.)/\U\1/')
+
+# Final output using required variable names
+echo "$name is of type $type, weighs ${formatted_weight}kg, and is ${formatted_height}m tall."
