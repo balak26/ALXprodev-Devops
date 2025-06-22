@@ -1,0 +1,8 @@
+#!/bin/bash
+# Script to fetch Pikachu data from Pokémon API and handle errors
+
+curl -s -f "https://pokeapi.co/api/v2/pokemon/pikachu" -o data.json
+
+if [ $? -ne 0 ]; then
+  echo "Failed to fetch Pikachu data from API on $(date)" >> errors.txt
+fi
