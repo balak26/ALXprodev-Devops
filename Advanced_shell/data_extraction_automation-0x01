@@ -1,18 +1,14 @@
 #!/bin/bash
-# Extract and print human-readable Pokémon data from data.json
+# Script to extract and format Pokémon data using jq, awk, sed
 
 jq -r '
-  .name as $name |
-  .height as $height |
-  .weight as $weight |
-  .types[0].type.name as $type |
-  [$name, $type, ($weight / 10), ($height / 10)] |
-  @tsv
-' data.json | awk -F '\t' '
-{
-  name = toupper(substr($1,1,1)) tolower(substr($1,2))
-  type = toupper(substr($2,1,1)) tolower(substr($2,2))
-  weight = int($3)
-  height = $4
-  printf "%s is of type %s, weighs %dkg, and is %.1fm tall.\n", name, type, weight, height
-}'
+  .name, .types[0].type.name, .weight, .height
+' data.json | awk '
+NR==1 { name=$0 }
+NR==2 { type=$0 }
+NR==3 { weight_kg = int($0 / 10) }
+NR==4 { height_m = $0 / 10 }
+END {
+  printf "%s is of type %s, weighs %dkg, and is %.1fm tall.\n", name, type, weight_kg, height_m
+}
+' | sed -E 's/^(.)/\U\1/; s/ of type (.)/ of type \U\1/'
