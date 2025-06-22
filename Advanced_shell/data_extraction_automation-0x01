@@ -1,20 +1,18 @@
 #!/bin/bash
-# Script to extract and format Pokémon data from data.json
+# Extract and print human-readable Pokémon data from data.json
 
 jq -r '
   .name as $name |
   .height as $height |
   .weight as $weight |
   .types[0].type.name as $type |
-  "\($name) is of type \($type), weighs \($weight)kg, and is \($height)m tall."
-' data.json |
-# Convert decimeters to meters and hectograms to kilograms using awk
-awk '{
-  height_m = $NF + 0;             # extract height from the last field
-  weight_kg = $(NF-4) + 0;        # extract weight from 5th last field
-  height_m /= 10;
-  weight_kg /= 10;
-  sub(/[0-9]+kg/, weight_kg "kg");
-  sub(/[0-9.]+m/, height_m "m");
-  print;
+  [$name, $type, ($weight / 10), ($height / 10)] |
+  @tsv
+' data.json | awk -F '\t' '
+{
+  name = toupper(substr($1,1,1)) tolower(substr($1,2))
+  type = toupper(substr($2,1,1)) tolower(substr($2,2))
+  weight = int($3)
+  height = $4
+  printf "%s is of type %s, weighs %dkg, and is %.1fm tall.\n", name, type, weight, height
 }'
