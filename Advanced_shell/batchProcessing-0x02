@@ -1,24 +1,37 @@
 #!/bin/bash
-# Script to fetch data for multiple Pokémon and save to individual files
+# Script to fetch Pokémon data with retry logic and error handling
 
-# List of Pokémon
 POKEMONS=("bulbasaur" "ivysaur" "venusaur" "charmander" "charmeleon")
 
-# Loop through each Pokémon
-for NAME in "${POKEMONS[@]}"
-do
-  echo "Fetching data for $NAME..."
+API_URL="https://pokeapi.co/api/v2/pokemon"
+DELAY=1.5
+MAX_RETRIES=3
 
-  # Fetch data and save to file
-  RESPONSE=$(curl -s -f "https://pokeapi.co/api/v2/pokemon/$NAME")
+for NAME in "${POKEMONS[@]}"; do
+  echo "📦 Fetching data for $NAME..."
+  
+  success=false
+  attempt=1
 
-  if [ $? -eq 0 ]; then
-    echo "$RESPONSE" > "${NAME}.json"
-    echo "Saved to ${NAME}.json"
-  else
-    echo "Failed to fetch data for $NAME at $(date)" >> errors.txt
+  while [ $attempt -le $MAX_RETRIES ]; do
+    response=$(curl -s -f "$API_URL/$NAME")
+
+    if [ $? -eq 0 ]; then
+      echo "$response" > "${NAME}.json"
+      echo "✅ Successfully saved ${NAME}.json"
+      success=true
+      break
+    else
+      echo "⚠️ Attempt $attempt failed for $NAME."
+      sleep $DELAY
+      attempt=$((attempt + 1))
+    fi
+  done
+
+  if ! $success; then
+    echo "❌ Failed to fetch data for $NAME after $MAX_RETRIES attempts on $(date)" >> errors.txt
+    echo "Logged error for $NAME."
   fi
 
-  # Delay to avoid rate-limiting (e.g., 1.5 seconds)
-  sleep 1.5
+  sleep $DELAY
 done

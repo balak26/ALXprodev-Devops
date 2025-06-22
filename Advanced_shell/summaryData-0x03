@@ -1,0 +1,34 @@
+#!/bin/bash
+# Script to create a CSV report and calculate averages
+
+# Output CSV file
+REPORT_FILE="report.csv"
+
+# Write CSV header
+echo "Name,Height (dm),Weight (hg)" > "$REPORT_FILE"
+
+# Loop through all .json files
+for file in *.json; do
+  # Use jq to extract name, height, and weight
+  jq -r '[.name, .height, .weight] | @csv' "$file" >> "$REPORT_FILE"
+done
+
+echo "✅ Report generated: $REPORT_FILE"
+echo
+
+# Calculate averages using awk
+awk -F, '
+NR > 1 {
+  height += $2
+  weight += $3
+  count++
+}
+END {
+  if (count > 0) {
+    printf "Average Height: %.2f dm\n", height / count
+    printf "Average Weight: %.2f hg\n", weight / count
+  } else {
+    print "No data available to calculate averages."
+  }
+}
+' "$REPORT_FILE"

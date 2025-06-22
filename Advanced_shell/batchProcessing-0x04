@@ -1,0 +1,29 @@
+#!/bin/bash
+# Script to fetch Pokémon data in parallel with process management
+
+POKEMONS=("bulbasaur" "ivysaur" "venusaur" "charmander" "charmeleon")
+API_URL="https://pokeapi.co/api/v2/pokemon"
+
+# Function to fetch data for a single Pokémon
+fetch_pokemon() {
+  local NAME=$1
+  echo "🔄 Fetching $NAME..."
+
+  RESPONSE=$(curl -s -f "$API_URL/$NAME")
+  if [ $? -eq 0 ]; then
+    echo "$RESPONSE" > "${NAME}.json"
+    echo "✅ $NAME saved."
+  else
+    echo "❌ Failed to fetch $NAME on $(date)" >> errors.txt
+  fi
+}
+
+# Fetch all Pokémon in parallel
+for NAME in "${POKEMONS[@]}"; do
+  fetch_pokemon "$NAME" &
+done
+
+# Wait for all background jobs to finish
+wait
+
+echo "🎉 All Pokémon data fetched."
